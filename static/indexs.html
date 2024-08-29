@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Popup</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 400px;
+            z-index: 1000;
+        }
+
+        .chatbot-button {
+            background-color: #20c997;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chatbot-button img {
+            width: 30px;
+            height: 30px;
+        }
+
+        .chatbot-popup {
+            display: none;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chatbot-header {
+            background-color: #20c997; /* Light teal color */
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 18px;
+        }
+
+        .chatbot-header .chatbot-icon {
+            width: 25px;
+            height: 25px;
+            margin-right: 10px;
+        }
+
+        .chatbot-header .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .chatbot-body {
+            padding: 15px;
+            font-size: 14px;
+            color: #333;
+            max-height: 400px;
+            overflow-y: auto;
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 20px;
+            clear: both;
+            display: inline-block;
+            max-width: 75%;
+        }
+
+        .message.user {
+            background-color: #dcf8c6;
+            text-align: right;
+            float: right;
+        }
+
+        .message.bot {
+            background-color: #e9f5ff;
+            text-align: left;
+            float: left;
+        }
+
+        .chatbot-footer {
+            padding: 10px;
+            background-color: #f1f1f1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chatbot-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        .chatbot-footer button {
+            background-color: #20c997;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .chatbot-footer button:hover {
+            background-color: #1ab189;
+        }
+
+        .chatbot-popup.show {
+            display: block;
+        }
+        .predefined-questions {
+            margin-bottom: 15px;
+        }
+
+        .predefined-questions button {
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .predefined-questions button:hover {
+            background-color: #e9e9e9;
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="chatbot-button" onclick="toggleChatbot()">
+            <img src="static/chatbot-icon.png" alt="Chatbot">
+        </div>
+        <div class="chatbot-popup" id="chatbotPopup">
+            <div class="chatbot-header">
+                <span>WalBot</span>
+                <img src="static/th-removebg-preview.png" alt="Walmart" style="width: 100px;">                
+                <button class="close-btn" onclick="toggleChatbot()">✖</button>
+            </div>
+            <div id="chat" class="chatbot-body">
+                <!-- Predefined questions -->
+                <div class="predefined-questions">
+                    <button onclick="askPredefinedQuestion('What are your store hours?')">What are your store hours?</button>
+                    <button onclick="askPredefinedQuestion('How do I track my order?')">How do I track my order?</button>
+                    <button onclick="askPredefinedQuestion('What is your return policy?')">What is your return policy?</button>
+                </div>
+                <!-- Chat messages will be displayed here -->
+            </div>
+            <div class="chatbot-footer">
+                <input type="text" id="userInput" class="chatbot-input" name="userInput" required placeholder="Type your message...">
+                <button type="submit" form="chatForm">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <form id="chatForm">
+        <input type="submit" style="display:none;">
+    </form>
+
+    <script>
+        function toggleChatbot() {
+            var chatbotPopup = document.getElementById("chatbotPopup");
+            chatbotPopup.classList.toggle("show");
+        }
+
+        async function askPredefinedQuestion(question) {
+            const chatDiv = document.getElementById('chat');
+
+            // Display the predefined question as user's message
+            chatDiv.innerHTML += `<div class="message user">You: ${question}</div><div style="clear: both;"></div>`;
+
+            try {
+                // Send the request to the FastAPI backend
+                const response = await fetch('http://127.0.0.1:8000/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        context: "",  // You may want to maintain the context here
+                        question: question
+                    }),
+                });
+
+                const data = await response.json();
+
+                // Display the bot's response
+                chatDiv.innerHTML += `<div class="message bot">Bot: ${data.answer}</div><div style="clear: both;"></div>`;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+
+            // Scroll to the bottom of the chat
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
+
+        document.getElementById('chatForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const userInput = document.getElementById('userInput').value;
+            const chatDiv = document.getElementById('chat');
+
+            // Display the user's message
+            chatDiv.innerHTML += `<div class="message user">You: ${userInput}</div><div style="clear: both;"></div>`;
+
+            try {
+                // Send the request to the FastAPI backend
+                const response = await fetch('http://127.0.0.1:8000/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        context: "",  // You may want to maintain the context here
+                        question: userInput
+                    }),
+                });
+
+                const data = await response.json();
+
+                // Display the bot's response
+                chatDiv.innerHTML += `<div class="message bot">Bot: ${data.answer}</div><div style="clear: both;"></div>`;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+
+            // Clear the input field
+            document.getElementById('userInput').value = '';
+
+            // Scroll to the bottom of the chat
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        });
+    </script>
+</body>
+</html>
